@@ -1,0 +1,65 @@
+import urllib.request
+import os
+
+
+def url_open(url):
+	req = urllib.request.Request(url)
+	req.add_header('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/45.0.2454.101 Safari/537.36')
+	response = urllib.request.urlopen(url)
+	html = response.read()
+
+
+
+	return html
+
+def get_page(url):
+	html = url_open(url).decode('utf8')
+
+	aa = html.find('current-comment-page') + 23
+	bb = html.find(']', aa)
+
+	return html[aa:bb]
+
+def find_imgs(url):
+	html = url_open(url).decode('utf8')
+	img_addr = []
+
+	aa = html.find('img src="http')
+
+	while aa != -1: 
+		bb = html.find('.jpg', aa, aa+255)
+		if bb != -1:
+			img_addr.append(html[aa+9:bb+4])
+		else:
+			bb = aa + 9
+		aa = html.find('img src="http', bb)
+
+	return img_addr
+
+
+
+def save_imgs(folder, img_addr):
+	for each in img_addr:
+		filename = each.split('/')[-1]
+		with open(filename, 'wb') as f:
+			img = url_open(each)
+			f.write(img)
+
+def download_mm(folder='OOXX', pages = 10):
+	if not os.path.exists(folder):
+		os.mkdir(folder)
+	os.chdir(folder)
+
+
+	url = "http://jandan.net/ooxx"
+	page_num = int(get_page(url))
+
+	for i in range(pages):
+		page_num -= i
+		page_url = url + '/page-' + str(page_num) + '#comments'
+		img_addr = find_imgs(page_url)
+		save_imgs(folder, img_addr)
+
+
+if __name__ == '__main__':
+	download_mm()
